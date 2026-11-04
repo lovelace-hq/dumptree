@@ -1,0 +1,10 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {parseDump,toJSON,pathFor} from '../parser.mjs';
+test('embedded quotes, newline and braces use byte lengths',()=>{for(const s of ['a"b','{\n"}','é🐈\r\n','', '<script>alert(1)<\/script>']){const dump='string('+new TextEncoder().encode(s).length+') "'+s+'"';assert.equal(parseDump(dump)[0].value,s);}});
+test('nested object visibility and paths',()=>{const n=parseDump('object(App\\User)#9 (2) { ["name":protected]=>string(3) "Ada" ["id":"App\\User":private]=>int(5) }')[0];assert.equal(n.children[1].owner,'App\\User');assert.deepEqual({...toJSON(n,true)},{});assert.equal(pathFor('$x',n.children[0],true),'$x->name');});
+test('multiple roots, CRLF, reference, empty array',()=>{assert.equal(parseDump('int(1)\r\n&array(0) {}\nNULL\nbool(false)').length,4);});
+test('scalars and special values',()=>{for(const s of ['float(1.2E-5)','float(NAN)','float(-INF)','enum(Color::Blue)','resource(9) of type (stream)','uninitialized(?string)','*RECURSION*','int(9223372036854775807)'])assert.equal(parseDump(s).length,1);});
+test('arrays preserve sparse keys, dangerous keys safe',()=>{const n=parseDump('array(2) { [2]=>bool(true) ["__proto__"]=>NULL }')[0];assert.equal(toJSON(n)['2'],true);assert.equal(toJSON(n).__proto__,null);assert.equal({}.polluted,undefined);});
+test('line errors, length, entry count, invalid data',()=>{for(const s of ['\nwat','string(3) "a"','array(2) {[0]=>int(1)}','array(1) {','float(1e)'])assert.throws(()=>parseDump(s),/Line \d+/);});
+test('byte length cannot split a UTF8 character',()=>assert.throws(()=>parseDump('string(1) "é"'),/byte length/));
+test('nested array and path quote escaping',()=>{const n=parseDump('array(1) { ["a"]=>array(1) { [0]=>int(3) } }')[0];assert.deepEqual({...toJSON(n)},{a:[3]});assert.equal(pathFor('$x',{key:"a'b"},false),"$x['a\\'b']");});
+test('blank',()=>assert.deepEqual(parseDump(' \r\n'),[]));
