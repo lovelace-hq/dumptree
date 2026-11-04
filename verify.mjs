@@ -1,0 +1,13 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1460,height:790}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto('https://dumptree.pages.dev');assert.equal(await page.locator('#source').inputValue(),'');
+await page.locator('#example').click();assert.equal(await page.locator('#error').isVisible(),false);assert.equal(await page.locator('#count').innerText(),'2 roots');
+await page.screenshot({path:'evidence/desktop-1460.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'evidence/mobile-390.png',fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+await page.locator('#tab-json').click();const data=JSON.parse(await page.locator('#json').innerText());assert.equal(data[0].name,'Mira');assert.equal(data[0].active,true);await page.locator('#hide').check();assert.equal(JSON.parse(await page.locator('#json').innerText())[0].active,undefined);
+await page.locator('#tab-tree').click();await page.locator('#search').fill('code');assert.ok((await page.locator('#tree').innerText()).includes('code'));assert.equal((await page.locator('#tree').innerText()).includes('Mira'),false);
+await page.locator('#search').fill('');await page.locator('#collapse').click();assert.equal(await page.locator('#tree details[open]').count(),0);await page.locator('#expand').click();assert.ok(await page.locator('#tree details[open]').count()>0);
+await page.locator('#source').fill('string(28) "<img src=x onerror=alert(1)>"');assert.equal(await page.locator('#tree img').count(),0);
+await page.locator('#source').fill('\nwhoops');assert.ok((await page.locator('#error').innerText()).startsWith('Line 2:'));assert.equal(await page.locator('#copy').isDisabled(),true);
+await page.goto('https://dumptree.pages.dev/#d='+encodeURIComponent('bool(true)\nint(5)'));assert.equal(await page.locator('#count').innerText(),'2 roots');
+await page.locator('#clear').click();assert.equal(await page.locator('#source').inputValue(),'');assert.equal(new URL(page.url()).hash,'');
+await page.locator('#theme').click();await page.locator('#example').click();await page.setViewportSize({width:1460,height:790});await page.screenshot({path:'evidence/desktop-light-1460.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'evidence/mobile-light-390.png',fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);await browser.close();console.log('Browser smoke passed');
