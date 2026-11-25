@@ -1,8 +1,8 @@
 # Dumptree
 
-A browser-only PHP var_dump workbench, styled to match [Paramtree](https://paramtree.pages.dev).
+A browser-only PHP var_dump workbench, styled to match [Paramtree](https://paramtree.yv3.uk).
 
-Live at https://dumptree.pages.dev
+Live at https://dumptree.yv3.uk
 
 Paste plain var_dump output to inspect collapsible trees, flat paths, or JSON. Supports multiple roots, UTF-8 byte-length strings (including quotes and newlines), arrays, objects with visibility and declaring classes, enums, resources, uninitialized values, recursion markers, references, and scalar types.
 
